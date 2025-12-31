@@ -13,9 +13,19 @@ export class Sparkler {
     
     // Visuals
     this.thickness = 4;
-    this.angle = 0; // Rotation angle (optional, maybe based on movement)
+    this.angle = -10 * (Math.PI / 180); // Tilt left 10 degrees
+    this.baseAngle = -10 * (Math.PI / 180);
     this.prevX = x;
     this.prevY = y;
+    
+    // Animation State
+    this.state = 'IDLE'; // IDLE, DROPPING, PICKING_UP, HOLDING
+    this.vy = 0; // Vertical velocity for dropping
+    this.vr = 0; // Rotational velocity for dropping
+    
+    // Hand Image
+    this.handImg = new Image();
+    this.handImg.src = '/hand.png'; // Hand asset
     
     // Sparks
     this.sparks = []; // Active sparks
@@ -31,13 +41,64 @@ export class Sparkler {
     this.isLit = true;
   }
 
+  drop() {
+    this.state = 'DROPPING';
+    // Throw effect:
+    // Toss up (-10) and to the side (random -5 to 5)
+    this.vy = -10; 
+    this.vx = (Math.random() - 0.5) * 10; 
+    this.vr = (Math.random() - 0.5) * 0.4; // Faster spin for the toss
+  }
+
+  pickup(startX, startY, targetX, targetY) {
+    this.state = 'PICKING_UP';
+    this.x = startX;
+    this.y = startY;
+    this.targetX = targetX;
+    this.targetY = targetY;
+    this.pickupProgress = 0;
+    
+    // Reset sparkler internals
+    this.burntLength = 0;
+    this.isLit = false;
+    this.angle = this.baseAngle; // Reset angle
+    
+    // Return sparks to pool (clean up old ones)
+    while (this.sparks.length > 0) {
+        this.pool.push(this.sparks.pop());
+    }
+  }
+
   update(mouseX, mouseY) {
-    // Follow mouse with some smoothing (or direct 1:1 for responsiveness)
-    // Direct 1:1 is better for "holding" feel unless we want physics delay.
     this.prevX = this.x;
     this.prevY = this.y;
-    this.x = mouseX;
-    this.y = mouseY;
+
+    if (this.state === 'DROPPING') {
+        this.vy += 0.5; // Gravity
+        this.y += this.vy;
+        this.x += this.vx; // Horizontal movement
+        this.angle += this.vr;
+        // Don't follow mouse
+    } else if (this.state === 'PICKING_UP') {
+        this.pickupProgress += 0.05; // Animation speed
+        if (this.pickupProgress >= 1) {
+            this.state = 'IDLE';
+            this.pickupProgress = 1;
+        }
+        
+        // Lerp position
+        // Simple Ease-out
+        const t = 1 - Math.pow(1 - this.pickupProgress, 3);
+        
+        this.x = this.x + (mouseX - this.x) * 0.1; // Soft follow for X
+        this.y = window.innerHeight + (mouseY - window.innerHeight) * t; // Rise from bottom
+        
+    } else {
+        // IDLE / HOLDING
+        // Follow mouse
+        this.x = mouseX;
+        this.y = mouseY;
+    }
 
     // Calculate movement velocity for spark direction
     const dx = this.x - this.prevX;
@@ -52,8 +113,18 @@ export class Sparkler {
     
     // Generate sparks if lit
     if (this.isLit) {
-      const tipX = this.x;
-      const tipY = this.y - this.handleLength - this.length + this.burntLength;
+       // Tip position needs to respect rotation now!
+       // Center of rotation is (this.x, this.y) which is bottom of handle.
+       // The tip is at local coordinates (0, -handleLength - length + getBurntLength)
+       // We need to rotate that local vector.
+       
+       const localTipY = -this.handleLength - this.length + this.burntLength;
+       
+       // Rotate local point (0, localTipY) by this.angle
+       // x' = x*cos - y*sin
+       // y' = x*sin + y*cos
+       const tipX = this.x - localTipY * Math.sin(this.angle);
+       const tipY = this.y + localTipY * Math.cos(this.angle);
 
       // Create new sparks
       const sparkCount = Math.floor(Math.random() * 10) + 5; // MORE sparks
@@ -92,38 +163,58 @@ export class Sparkler {
   }
 
   drawStick(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+
+    // Draw Hand (Behind Stick) - Optional, depends on look. 
+    // Let's draw it behind.
+    if (this.handImg.complete && this.handImg.naturalWidth > 0 && this.state !== 'DROPPING') {
+         ctx.save();
+         ctx.globalAlpha = 0.5; // Transparent ghost hand
+         // Adjust scale and position to look like it's holding the handle
+         // Assuming handle bottom is at (0,0)
+         const scale = 0.3;
+         const w = this.handImg.width * scale;
+         const h = this.handImg.height * scale;
+         
+         // Position hand so the "grip" area aligns with (0, -handleLength/2) approx
+         ctx.drawImage(this.handImg, -w/2, -h/2 - 25, w, h);
+         ctx.restore();
+    }
+    
     // Draw Sparkler Stick
+    // Everything is relative to (0,0) now because we translated/rotated
+    
     // Handle (Bottom)
     ctx.lineWidth = this.thickness;
     ctx.lineCap = 'round';
     
-    // We assume (this.x, this.y) is where the user "holds" it (bottom of handle)
-    const handleTopY = this.y - this.handleLength;
+    // Handle goes from (0,0) to (0, -handleLength)
+    const handleTopY = -this.handleLength;
     const fuelTopY = handleTopY - this.length;
     
     // Draw Handle (Metal/Stick)
     ctx.strokeStyle = '#555';
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(this.x, handleTopY);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, handleTopY);
     ctx.stroke();
 
-    // Draw Core Wire (entire length of fuel part, visible if burnt)
-    // Actually standard sparklers have a wire core.
+    // Draw Core Wire
     ctx.strokeStyle = '#333';
     ctx.beginPath();
-    ctx.moveTo(this.x, handleTopY);
-    ctx.lineTo(this.x, fuelTopY);
+    ctx.moveTo(0, handleTopY);
+    ctx.lineTo(0, fuelTopY);
     ctx.stroke();
 
     // Draw Unburnt Fuel (Gray)
-    // From fuelTopY down to fuelTopY + (length - burntLength)
     if (this.burntLength < this.length) {
         ctx.strokeStyle = '#777';
         ctx.lineWidth = this.thickness + 2; // Fuel is thicker
         ctx.beginPath();
-        ctx.moveTo(this.x, fuelTopY + this.burntLength);
-        ctx.lineTo(this.x, handleTopY);
+        ctx.moveTo(0, fuelTopY + this.burntLength);
+        ctx.lineTo(0, handleTopY);
         ctx.stroke();
     }
     
@@ -132,7 +223,7 @@ export class Sparkler {
         const tipY = fuelTopY + this.burntLength;
         ctx.fillStyle = '#ff4400';
         ctx.beginPath();
-        ctx.arc(this.x, tipY, 4, 0, Math.PI * 2);
+        ctx.arc(0, tipY, 4, 0, Math.PI * 2);
         ctx.fill();
         
         // Glow
@@ -141,6 +232,8 @@ export class Sparkler {
         ctx.fill();
         ctx.shadowBlur = 0; // Reset
     }
+    
+    ctx.restore();
   }
 
   drawSparks(ctx) {
