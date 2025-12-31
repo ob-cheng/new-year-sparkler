@@ -7,7 +7,7 @@ export class Sparkler {
     // Physical properties
     this.length = 150; // Length of the burnt part + unburnt part
     this.handleLength = 50;
-    this.burnRate = 0.3; // Pixels per frame approx
+    this.burnRate = 0.25; // Pixels per frame approx (150 / 0.25 / 60fps = 10s)
     this.burntLength = 0; // How much has burned
     this.isLit = false;
     
