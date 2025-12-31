@@ -120,13 +120,27 @@ export class HandTracker {
       const isThumbUp = isThumbRigid && isHighest;
       
       // 3. Detect "Open Hand" (All fingers extended)
-      // Check if Index, Middle, Ring, Pinky tips are above their PIP joints
-      // AND Thumb is relatively extended
-      const isIndexOpen = landmarks[8].y < landmarks[6].y;
-      const isMiddleOpen = landmarks[12].y < landmarks[10].y;
-      const isRingOpen = landmarks[16].y < landmarks[14].y;
-      const isPinkyOpen = landmarks[20].y < landmarks[18].y;
-      const isThumbOpen = landmarks[4].x < landmarks[3].x; // Dependent on handedness, maybe skip thumb for openness or check distance
+      // Robust Check: Is Flip/Tip further from Wrist (0) than PIP (Joint) is?
+      // This works regardless of hand rotation.
+      
+      const wrist = landmarks[0];
+      
+      function isExtended(tip, pip) {
+          const dyTip = tip.y - wrist.y;
+          const dxTip = tip.x - wrist.x;
+          const distTip = Math.sqrt(dxTip*dxTip + dyTip*dyTip);
+          
+          const dyPip = pip.y - wrist.y;
+          const dxPip = pip.x - wrist.x;
+          const distPip = Math.sqrt(dxPip*dxPip + dyPip*dyPip);
+          
+          return distTip > distPip;
+      }
+      
+      const isIndexOpen = isExtended(landmarks[8], landmarks[6]);
+      const isMiddleOpen = isExtended(landmarks[12], landmarks[10]);
+      const isRingOpen = isExtended(landmarks[16], landmarks[14]);
+      const isPinkyOpen = isExtended(landmarks[20], landmarks[18]);
       
       // Simple openness: 4 fingers extended
       const isOpenHand = isIndexOpen && isMiddleOpen && isRingOpen && isPinkyOpen;

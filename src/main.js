@@ -43,6 +43,7 @@ const snow = new SnowSystem(window.innerWidth, window.innerHeight);
 const handTracker = new HandTracker();
 let arMode = false;
 let handPresent = false; 
+let lastGesture = ''; // Debug 
 
 function resize() {
   width = window.innerWidth;
@@ -89,6 +90,10 @@ handTracker.onLandmarks = (data) => {
     sparkler.y += dy * 0.2;
     
     // Auto-ignite on Thumb Up
+    if (data.isThumbUp) lastGesture = 'Thumb Up 👍';
+    else if (data.isOpenHand) lastGesture = 'Open Hand 🖐';
+    else lastGesture = 'Tracking...';
+
     if (data.isThumbUp && !sparkler.isLit) {
         sparkler.ignite();
     }
@@ -215,6 +220,13 @@ function animate() {
            ctxStick.fillText('Thumbs Up to Light 👍', width / 2, height / 2 - 20);
            ctxStick.font = '20px Arial';
            ctxStick.fillText('Open Hand to Drop 🖐', width / 2, height / 2 + 20);
+           
+           // Debug Gesture State
+           ctxStick.font = '16px monospace';
+           ctxStick.fillStyle = 'rgba(200, 255, 200, 0.8)';
+           if (lastGesture) {
+                ctxStick.fillText(`Gesture: ${lastGesture}`, width / 2, height - 50);
+           }
       } else {
            ctxStick.font = '30px Arial';
            ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
