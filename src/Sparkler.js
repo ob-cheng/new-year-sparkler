@@ -33,7 +33,7 @@ export class Sparkler {
     
     // Pre-allocate pool
     for (let i = 0; i < 1000; i++) {
-        this.pool.push(new Spark(0, 0, 0, 0, '#000', 0, 0));
+        this.pool.push(new Spark(0, 0, 0, 0, 0, 0));
     }
   }
 
@@ -113,35 +113,34 @@ export class Sparkler {
     
     // Generate sparks if lit
     if (this.isLit) {
-       // Tip position needs to respect rotation now!
-       // Center of rotation is (this.x, this.y) which is bottom of handle.
-       // The tip is at local coordinates (0, -handleLength - length + getBurntLength)
-       // We need to rotate that local vector.
-       
+       // Tip position
        const localTipY = -this.handleLength - this.length + this.burntLength;
-       
-       // Rotate local point (0, localTipY) by this.angle
-       // x' = x*cos - y*sin
-       // y' = x*sin + y*cos
        const tipX = this.x - localTipY * Math.sin(this.angle);
        const tipY = this.y + localTipY * Math.cos(this.angle);
 
-      // Create new sparks
-      const sparkCount = Math.floor(Math.random() * 10) + 5; // MORE sparks
+      // Create new sparks (Sputtering effect)
+      // Burstiness: Randomly spawn MANY or FEW
+      // 10% chance of a big burst (pop)
+      let sparkCount = Math.floor(Math.random() * 5); 
+      if (Math.random() < 0.1) sparkCount = 20 + Math.floor(Math.random() * 20); 
+      
       for (let i = 0; i < sparkCount; i++) {
         if (this.pool.length > 0) {
-            const speed = Math.random() * 4 + 1;
+            // Ejection physics
+            // High velocity, radial + distinct directional bias
+            const speed = Math.random() * 6 + 2;
             const angle = Math.random() * Math.PI * 2;
-            // Add momentum from movement
-            const vx = Math.cos(angle) * speed + dx * 0.2; 
-            const vy = Math.sin(angle) * speed + dy * 0.2;
             
-            const color = `hsl(${40 + Math.random() * 20}, 100%, 80%)`; // Gold/Yellow
-            const size = Math.random() * 2 + 0.5;
-            const life = Math.random() * 1.5 + 0.5;
+            // Add momentum from movement
+            const vx = Math.cos(angle) * speed + dx * 0.4; 
+            const vy = Math.sin(angle) * speed + dy * 0.4;
+            
+            // Note: color is now handled inside Spark based on heat
+            const size = Math.random() * 2 + 1.0;
+            const life = Math.random() * 1.0 + 0.3;
             
             const spark = this.pool.pop();
-            spark.reset(tipX, tipY, vx, vy, color, size, life);
+            spark.reset(tipX, tipY, vx, vy, size, life);
             this.sparks.push(spark);
         }
       }
@@ -167,70 +166,78 @@ export class Sparkler {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    // Draw Hand (Behind Stick) - Optional, depends on look. 
-    // Let's draw it behind.
+    // [Draw Hand logic remains same, hidden for brevity here if unchanged]
     if (this.handImg.complete && this.handImg.naturalWidth > 0 && this.state !== 'DROPPING') {
          ctx.save();
-         ctx.globalAlpha = 0.5; // Transparent ghost hand
-         // Adjust scale and position to look like it's holding the handle
-         // Assuming handle bottom is at (0,0)
+         ctx.globalAlpha = 0.5;
          const scale = 0.3;
          const w = this.handImg.width * scale;
          const h = this.handImg.height * scale;
-         
-         // Position hand so the "grip" area aligns with (0, -handleLength/2) approx
          ctx.drawImage(this.handImg, -w/2, -h/2 - 25, w, h);
          ctx.restore();
     }
     
     // Draw Sparkler Stick
-    // Everything is relative to (0,0) now because we translated/rotated
     
     // Handle (Bottom)
-    ctx.lineWidth = this.thickness;
     ctx.lineCap = 'round';
     
-    // Handle goes from (0,0) to (0, -handleLength)
     const handleTopY = -this.handleLength;
     const fuelTopY = handleTopY - this.length;
     
-    // Draw Handle (Metal/Stick)
-    ctx.strokeStyle = '#555';
+    // 1. Draw Stick (Metal Wire) - Metallic Gradient
+    const wireGrad = ctx.createLinearGradient(-2, 0, 2, 0); // Horizontal gradient for cylinder
+    wireGrad.addColorStop(0, '#555');
+    wireGrad.addColorStop(0.4, '#aaa'); // Highlight
+    wireGrad.addColorStop(1, '#444');
+    
+    ctx.strokeStyle = wireGrad;
+    ctx.lineWidth = this.thickness;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(0, handleTopY);
+    ctx.lineTo(0, fuelTopY); // Wire goes all the way up through the fuel
     ctx.stroke();
 
-    // Draw Core Wire
-    ctx.strokeStyle = '#333';
-    ctx.beginPath();
-    ctx.moveTo(0, handleTopY);
-    ctx.lineTo(0, fuelTopY);
-    ctx.stroke();
-
-    // Draw Unburnt Fuel (Gray)
+    // 2. Draw Unburnt Fuel (Textured)
     if (this.burntLength < this.length) {
-        ctx.strokeStyle = '#777';
-        ctx.lineWidth = this.thickness + 2; // Fuel is thicker
+        // Create Fuel Gradient (Dark gray bumpy)
+        const fuelGrad = ctx.createLinearGradient(-3, 0, 3, 0);
+        fuelGrad.addColorStop(0, '#333');
+        fuelGrad.addColorStop(0.3, '#555');
+        fuelGrad.addColorStop(0.5, '#444');
+        fuelGrad.addColorStop(1, '#222');
+        
+        ctx.strokeStyle = fuelGrad;
+        ctx.lineWidth = this.thickness + 3; // Thicker fuel
         ctx.beginPath();
+        
+        // Draw segment from unburnt top to bottom of fuel part
+        // start: fuelTopY + burntLength (top of unburnt)
+        // end: handleTopY (bottom of fuel)
         ctx.moveTo(0, fuelTopY + this.burntLength);
         ctx.lineTo(0, handleTopY);
         ctx.stroke();
     }
     
-    // Draw Hot Tip (Glowing Red)
+    // 3. Draw Hot Tip (Intense Core)
     if (this.isLit) {
         const tipY = fuelTopY + this.burntLength;
-        ctx.fillStyle = '#ff4400';
+        
+        // Inner intense white hot
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(0, tipY, 4, 0, Math.PI * 2);
+        ctx.arc(0, tipY, 3, 0, Math.PI * 2);
         ctx.fill();
         
-        // Glow
-        ctx.shadowColor = '#ffaa00';
-        ctx.shadowBlur = 20;
+        // Outer glow
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = 'rgba(255, 200, 0, 0.8)';
+        ctx.beginPath();
+        ctx.arc(0, tipY, 6, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0; // Reset
+        ctx.shadowBlur = 0;
     }
     
     ctx.restore();
