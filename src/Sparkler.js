@@ -105,6 +105,26 @@ export class Sparkler {
     const dx = this.x - this.prevX;
     const dy = this.y - this.prevY;
     
+    // -- Dynamic Waving Physics --
+    if (this.state !== 'DROPPING' && this.state !== 'PICKING_UP') {
+        // Inertia: Stick tilts opposite to movement
+        // dx > 0 (Right) -> Tilt Left (Negative)
+        // dx < 0 (Left) -> Tilt Right (Positive)
+        const tiltStrength = 0.02; 
+        const maxTilt = 0.8; // ~45 degrees
+        
+        let targetAngle = this.baseAngle - (dx * tiltStrength);
+        
+        // Clamp
+        if (targetAngle < -maxTilt) targetAngle = -maxTilt;
+        if (targetAngle > maxTilt) targetAngle = maxTilt;
+        
+        // Soft follow (Lerp)
+        this.angle += (targetAngle - this.angle) * 0.1;
+        
+        // Add vertical bobbing logic? maybe later.
+    }
+    
     // Burn logic
     if (this.isLit && this.burntLength < this.length) {
       this.burntLength += this.burnRate;
