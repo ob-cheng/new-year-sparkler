@@ -47,6 +47,9 @@ function resize() {
   snow.resize(width, height);
   bgSystem.resize(width, height);
 }
+window.addEventListener('resize', resize);
+resize();
+
 const uiOverlay = document.createElement('div');
 uiOverlay.id = 'ui-overlay';
 uiOverlay.innerHTML = `
@@ -72,29 +75,6 @@ const mainText = document.getElementById('main-text');
 const subText = document.getElementById('sub-text');
 const debugText = document.getElementById('debug-text');
 
-const ctxStick = canvasStick.getContext('2d');
-const ctxSparks = canvasSparks.getContext('2d');
-
-let width, height;
-// Create Systems
-const sparkler = new Sparkler(0, 0); 
-const snow = new SnowSystem(window.innerWidth, window.innerHeight);
-const handTracker = new HandTracker();
-let arMode = false;
-let handPresent = false; 
-let lastGesture = ''; 
-
-function resize() {
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvasStick.width = width;
-  canvasStick.height = height;
-  canvasSparks.width = width;
-  canvasSparks.height = height;
-  snow.resize(width, height);
-}
-window.addEventListener('resize', resize);
-resize();
 
 // Interaction State
 const mouse = { x: width / 2, y: height * 0.8 };
