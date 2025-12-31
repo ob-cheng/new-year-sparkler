@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="public/icon.png" width="128" placeholder="Sparkler Icon">
   <h1>New Year Sparkler 🎆</h1>
   <p>A magical, virtual sparkler experience for the web.</p>
   
