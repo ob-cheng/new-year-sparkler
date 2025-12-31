@@ -93,17 +93,31 @@ export class HandTracker {
       const y = indexTip.y * height;
       
       // 2. Detect "Thumb Up"
-      // Thumb Tip (4) should be significantly higher (lower y) than Thumb IP (3)
-      // AND Index Finger is curled or at least not higher than thumb?
-      // Simple heuristic: Thumb Tip y < Thumb IP y && Thumb Tip y < Index Tip y (maybe?)
-      // Actually "Thumb Up" usually means fist closed except thumb.
+      // Strict Logic:
+      // A. Thumb Tip (4) must be ABOVE Thumb IP (3) (y is smaller)
+      // B. Thumb Tip must be ABOVE Index MCP (5) (Knuckle)
+      // C. KEY: All other digits (8, 12, 16, 20) must be CURLED (below their PIP/MCP joints) 
+      //    OR just simpler: Thumb Tip is the HIGHEST point of the hand (lowest Y).
       
-      // Let's compare Thumb Tip (4) vs Index Tip (8), Middle (12), Ring (16), Pinky (20).
-      // Good Thumb Up: Thumb Tip is highest point (lowest Y).
       const thumbTip = landmarks[4];
-      const isThumbUp = thumbTip.y < landmarks[3].y // Thumb is extending up
-                        && thumbTip.y < landmarks[8].y // Higher than index
-                        && thumbTip.y < landmarks[12].y; // Higher than middle
+      const thumbIP = landmarks[3];
+      const indexTip = landmarks[8];
+      const middleTip = landmarks[12];
+      const ringTip = landmarks[16];
+      const pinkyTip = landmarks[20];
+      
+      // Check 1: Thumb is pointing UP (Tip y < IP y)
+      const isThumbRigid = thumbTip.y < thumbIP.y;
+      
+      // Check 2: Thumb is the HIGHEST finger (lowest Y value)
+      // Allow small margin for error
+      const margin = 0.05; 
+      const isHighest = thumbTip.y < (indexTip.y - margin) && 
+                        thumbTip.y < (middleTip.y - margin) &&
+                        thumbTip.y < (ringTip.y - margin) &&
+                        thumbTip.y < (pinkyTip.y - margin);
+
+      const isThumbUp = isThumbRigid && isHighest;
       
       if (this.onLandmarks) {
         this.onLandmarks({
