@@ -1,74 +1,128 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #000;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  overflow: hidden; /* Prevent scrollbars */
+  overflow: hidden;
+  background-color: #000;
+  touch-action: none;
+  font-family: 'Inter', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 canvas {
-  display: block;
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* Let events pass through to window/body if needed, or handle layer */
+  display: block;
 }
 
-/* Ensure background is strictly black on body, canvases transparent */
 #canvas-stick {
-  z-index: 1;
+  z-index: 1; /* Stick above BG, below sparks */
 }
+
 #canvas-sparks {
-  z-index: 2;
+  z-index: 2; /* Sparks on top */
+  pointer-events: none; /* Let clicks pass through */
 }
 
-.snow-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 14px;
-  transition: background 0.2s, transform 0.1s;
-  backdrop-filter: blur(4px);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+/* Premium UI Overlay */
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    pointer-events: none; /* Let clicks pass to canvas */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.snow-toggle:hover {
-  background: rgba(255, 255, 255, 0.2);
+/* Glass Dock */
+#ui-dock {
+    pointer-events: auto; /* Buttons clickable */
+    margin: 0 auto 30px auto; /* Bottom center */
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    display: flex;
+    gap: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.snow-toggle:active {
-  transform: scale(0.95);
+.dock-button {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
 }
 
-.snow-toggle.active {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+.dock-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.dock-button:active {
+    transform: scale(0.95);
+}
+
+.dock-button.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+.icon {
+    font-size: 18px;
+}
+
+/* Instructions Typography */
+#instructions {
+    margin-top: 20vh;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    transition: opacity 0.5s ease;
+}
+
+.headline {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+}
+
+.subtext {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Debug Text */
+#debug-text {
+    position: absolute;
+    bottom: 90px;
+    width: 100%;
+    text-align: center;
+    font-family: 'Inter', monospace;
+    font-size: 12px;
+    color: rgba(100, 255, 100, 0.6);
+    pointer-events: none;
 }

@@ -11,39 +11,43 @@ const canvasSparks = document.createElement('canvas');
 canvasSparks.id = 'canvas-sparks';
 document.body.appendChild(canvasSparks);
 
-// -- UI Container --
-const uiContainer = document.createElement('div');
-uiContainer.style.position = 'absolute';
-uiContainer.style.top = '10px';
-uiContainer.style.right = '10px';
-uiContainer.style.zIndex = '100';
-uiContainer.style.display = 'flex';
-uiContainer.style.gap = '10px';
-document.body.appendChild(uiContainer);
+// -- UI Overlay Structure --
+const uiOverlay = document.createElement('div');
+uiOverlay.id = 'ui-overlay';
+uiOverlay.innerHTML = `
+    <div id="instructions">
+        <div class="headline" id="main-text"></div>
+        <div class="subtext" id="sub-text"></div>
+    </div>
+    <div id="debug-text"></div>
+    <div id="ui-dock">
+        <button id="btn-snow" class="dock-button">
+            <span class="icon">❄️</span> Snow
+        </button>
+        <button id="btn-ar" class="dock-button">
+            <span class="icon">🪄</span> AR Mode
+        </button>
+    </div>
+`;
+document.body.appendChild(uiOverlay);
 
-// -- Snow Toggle UI --
-const snowButton = document.createElement('button');
-snowButton.className = 'ui-button';
-snowButton.textContent = 'Let it Snow ❄️';
-uiContainer.appendChild(snowButton);
-
-// -- AR Toggle UI --
-const arButton = document.createElement('button');
-arButton.className = 'ui-button';
-arButton.textContent = 'Enable AR 🪄';
-uiContainer.appendChild(arButton);
+const snowButton = document.getElementById('btn-snow');
+const arButton = document.getElementById('btn-ar');
+const mainText = document.getElementById('main-text');
+const subText = document.getElementById('sub-text');
+const debugText = document.getElementById('debug-text');
 
 const ctxStick = canvasStick.getContext('2d');
 const ctxSparks = canvasSparks.getContext('2d');
 
 let width, height;
 // Create Systems
-const sparkler = new Sparkler(0, 0); // Pos updated in resize/init
+const sparkler = new Sparkler(0, 0); 
 const snow = new SnowSystem(window.innerWidth, window.innerHeight);
 const handTracker = new HandTracker();
 let arMode = false;
 let handPresent = false; 
-let lastGesture = ''; // Debug 
+let lastGesture = ''; 
 
 function resize() {
   width = window.innerWidth;
@@ -59,7 +63,6 @@ resize();
 
 // Interaction State
 const mouse = { x: width / 2, y: height * 0.8 };
-// Input Listeners
 let isInteracting = false; 
 
 window.addEventListener('mousemove', (e) => {
@@ -76,50 +79,37 @@ window.addEventListener('touchmove', (e) => {
     mouse.y = e.touches[0].clientY;
 }, { passive: false });
 
-// Update initial sparkler pos
 sparkler.x = mouse.x;
 sparkler.y = mouse.y;
 
-    // AR Handler
-    handTracker.onLandmarks = (data) => {
-        handPresent = true;
-        
-        // CRITICAL FIX: Only follow hand if IDLE (holding it)
-        // If dropping or picking up, let the animation physics run!
-        if (sparkler.state === 'IDLE') {
-            // Smooth follow
-            const dx = data.x - sparkler.x;
-            const dy = data.y - sparkler.y;
-            sparkler.x += dx * 0.3; // Increased responsiveness slightly
-            sparkler.y += dy * 0.3;
-        }
-        
-        // Debug
-        if (data.isThumbUp) lastGesture = 'Thumb Up 👍';
-        else if (data.isOpenHand) lastGesture = 'Open Hand 🖐';
-        else lastGesture = 'Holding ✊';
-        
-        // Auto-ignite on Thumb Up
-        if (data.isThumbUp && !sparkler.isLit && sparkler.state === 'IDLE') {
-            sparkler.ignite();
-        }
-        
-        // Drop / New Sparkler on Open Hand
-        // Disabled per user request (switched to Tap)
-        // if (data.isOpenHand && sparkler.state === 'IDLE') {
-        //    resetSparkler();
-        // }
-        
-        // Hide Ghost Hand in AR mode
-        sparkler.useGhostHand = false;
-    };
+// AR Handler
+handTracker.onLandmarks = (data) => {
+    handPresent = true;
+    
+    if (sparkler.state === 'IDLE') {
+        const dx = data.x - sparkler.x;
+        const dy = data.y - sparkler.y;
+        sparkler.x += dx * 0.3; 
+        sparkler.y += dy * 0.3;
+    }
+    
+    if (data.isThumbUp) lastGesture = 'Thumb Up 👍';
+    else if (data.isOpenHand) lastGesture = 'Open Hand 🖐';
+    else lastGesture = 'Holding ✊';
+    
+    // Auto-ignite
+    if (data.isThumbUp && !sparkler.isLit && sparkler.state === 'IDLE') {
+        sparkler.ignite();
+    }
+    
+    sparkler.useGhostHand = false;
+};
 
 // Button Listeners
 snowButton.addEventListener('click', (e) => {
     e.stopPropagation(); 
     snow.active = !snow.active;
     snowButton.classList.toggle('active', snow.active);
-    snowButton.textContent = snow.active ? 'Stop Snowing 🚫' : 'Let it Snow ❄️';
 });
 
 arButton.addEventListener('click', async (e) => {
@@ -128,12 +118,11 @@ arButton.addEventListener('click', async (e) => {
     arButton.classList.toggle('active', arMode);
     
     if (arMode) {
-        arButton.textContent = 'Loading Camera... 📷';
+        mainText.textContent = '';
+        subText.textContent = 'Loading Camera...';
         try {
             await handTracker.start((data) => {
-                // Determine logic
                 handPresent = true;
-                // Direct mapping for responsiveness in AR
                 sparkler.x = data.x;
                 sparkler.y = data.y;
                  if (data.isThumbUp && !sparkler.isLit) {
@@ -141,17 +130,19 @@ arButton.addEventListener('click', async (e) => {
                 }
                 sparkler.useGhostHand = false;
             });
-             arButton.textContent = 'Disable AR ❌';
+             arButton.innerHTML = '<span class="icon">❌</span> Disable AR';
         } catch (err) {
             console.error(err);
-            arButton.textContent = 'Camera Failed ⚠️';
+            subText.textContent = 'Camera Failed ⚠️';
             arMode = false;
+            arButton.classList.remove('active');
         }
     } else {
         handTracker.stop();
         handPresent = false;
         sparkler.useGhostHand = true; 
-        arButton.textContent = 'Enable AR 🪄';
+        arButton.innerHTML = '<span class="icon">🪄</span> AR Mode';
+        lastGesture = '';
     }
 });
 
@@ -166,30 +157,69 @@ function igniteOrReset() {
 }
 
 window.addEventListener('mousedown', (e) => {
-    if (e.target.tagName === 'BUTTON') return;
+    if (e.target.closest('.dock-button')) return;
     igniteOrReset();
 });
 window.addEventListener('touchstart', (e) => {
-     if (e.target.tagName === 'BUTTON') return;
+     if (e.target.closest('.dock-button')) return;
      igniteOrReset();
 }, { passive: false });
 
+
+// UI Update Helper
+function updateUI() {
+    // Debug Text
+    debugText.textContent = (arMode && lastGesture) ? `Gesture: ${lastGesture}` : '';
+    
+    // Instructions
+    // Clear by default
+    let h = '';
+    let s = '';
+    
+    if (sparkler.state === 'PICKING_UP' || sparkler.state === 'DROPPING') {
+        mainText.style.opacity = '0';
+        return;
+    }
+    mainText.style.opacity = '1';
+
+    if (arMode) {
+          if (sparkler.state === 'IDLE') {
+              if (sparkler.burntLength >= sparkler.length - 1) {
+                  h = 'Tap to Drop 👆';
+                  s = 'Get a new sparkler';
+              } else if (!sparkler.isLit) {
+                  h = 'Thumbs Up 👍';
+                  s = 'to Light the Sparkler';
+              }
+          }
+    } else {
+        if (!sparkler.isLit) {
+             if (sparkler.burntLength >= sparkler.length - 1) {
+                 h = 'New Sparkler? 🎆';
+                 s = 'Tap anywhere';
+             } else if (sparkler.burntLength === 0) {
+                 h = 'Tap to Light! ✨';
+                 s = 'Зажигай! / Zapal!';
+             }
+        }
+    }
+    
+    // Only update if changed to prevent DOM thrashing
+    if (mainText.textContent !== h) mainText.textContent = h;
+    if (subText.textContent !== s) subText.textContent = s;
+}
 
 // Animation Loop
 function animate() {
   requestAnimationFrame(animate);
 
-  // Layer 1: Stick (Bottom) - Clear completely
   ctxStick.clearRect(0, 0, width, height);
   
-  // Layer 2: Sparks (Top) - Fade out effect
   ctxSparks.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
   ctxSparks.globalCompositeOperation = 'destination-out';
   ctxSparks.fillRect(0, 0, width, height);
   ctxSparks.globalCompositeOperation = 'source-over';
 
-  // Update logic
-  // Trigger pickup if dropped off screen
   if (sparkler.state === 'DROPPING' && sparkler.y > height + 200) {
      triggerPickup();
   }
@@ -204,60 +234,11 @@ function animate() {
   sparkler.update(targetX, targetY);
   snow.update();
   
-  // Draw logic
   snow.draw(ctxStick);
-  
   sparkler.drawStick(ctxStick);
   sparkler.drawSparks(ctxSparks);
   
-  // Instructions
-  ctxStick.fillStyle = 'rgba(255, 255, 255, 1.0)';
-  ctxStick.textAlign = 'center';
-  
-  // AR Mode Instructions
-  if (arMode) {
-      if (sparkler.state === 'IDLE') {
-          ctxStick.font = '30px Arial';
-          
-          if (sparkler.burntLength >= sparkler.length - 1) {
-              // Burnt out
-              ctxStick.fillText('Tap screen to Drop 👆', width / 2, height / 2);
-              ctxStick.font = '20px Arial';
-              ctxStick.fillText('(Get a new one)', width / 2, height / 2 + 30);
-          } else if (!sparkler.isLit) {
-              // Fresh
-              ctxStick.fillText('Thumbs Up to Light 👍', width / 2, height / 2);
-              ctxStick.font = '20px Arial';
-              ctxStick.fillText('(or Tap screen)', width / 2, height / 2 + 30);
-          }
-      }
-      
-      // Debug Gesture State
-      ctxStick.font = '16px monospace';
-      ctxStick.fillStyle = 'rgba(200, 255, 200, 0.8)';
-      if (lastGesture) {
-           ctxStick.fillText(`Gesture: ${lastGesture}`, width / 2, height - 50);
-      }
-      
-  } else {
-      // Mouse Mode Instructions
-      if (!sparkler.isLit && sparkler.burntLength === 0 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
-          ctxStick.font = '30px Arial';
-          ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
-          
-          ctxStick.font = '20px Arial';
-          ctxStick.fillText('Зажигай! ✨', width / 2, height / 2 + 35); // RU
-          ctxStick.fillText('Zapal! ✨', width / 2, height / 2 + 65); // PL
-          
-      } else if (!sparkler.isLit && sparkler.burntLength >= sparkler.length - 1 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
-          ctxStick.font = '30px Arial';
-          ctxStick.fillText('New Sparkler! 🎆', width / 2, height / 2);
-          
-          ctxStick.font = '20px Arial';
-          ctxStick.fillText('Ещё одну! 🎆', width / 2, height / 2 + 35); // RU
-          ctxStick.fillText('Jeszcze jedną! 🎆', width / 2, height / 2 + 65); // PL
-      }
-  }
+  updateUI();
 }
 
 function resetSparkler() {
@@ -265,20 +246,15 @@ function resetSparkler() {
 }
 
 function triggerPickup() {
-    // Start pickup from center bottom
     const startX = width / 2;
     const startY = height + 200; 
-    
     let tx = mouse.x;
     let ty = mouse.y;
     if (arMode && handPresent) {
         tx = sparkler.x; 
         ty = sparkler.y; 
     }
-    
     sparkler.pickup(startX, startY, tx, ty);
 }
-
-// ... inside animate loop logic above covers this ...
 
 animate();
