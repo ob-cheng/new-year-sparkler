@@ -100,6 +100,11 @@ function animate() {
   ctxSparks.globalCompositeOperation = 'source-over';
 
   // Update logic
+  // Trigger pickup if dropped off screen
+  if (sparkler.state === 'DROPPING' && sparkler.y > height + 200) {
+     triggerPickup();
+  }
+  
   sparkler.update(mouse.x, mouse.y);
   snow.update();
   
@@ -117,27 +122,40 @@ function animate() {
   ctxStick.font = '30px Arial';
   ctxStick.textAlign = 'center';
   
-  if (!sparkler.isLit && sparkler.burntLength === 0) {
-      ctxStick.fillText('Touch / Click to Ignite', width / 2, height / 2);
-  } else if (!sparkler.isLit && sparkler.burntLength >= sparkler.length - 1) {
-      ctxStick.fillText('Touch / Click to New Sparkler', width / 2, height / 2);
+  if (!sparkler.isLit && sparkler.burntLength === 0 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
+      ctxStick.font = '30px Arial';
+      ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
+      
+      ctxStick.font = '20px Arial';
+      ctxStick.fillText('Зажигай! ✨', width / 2, height / 2 + 35); // RU
+      ctxStick.fillText('Zapal! ✨', width / 2, height / 2 + 65); // PL
+      
+  } else if (!sparkler.isLit && sparkler.burntLength >= sparkler.length - 1 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
+      ctxStick.font = '30px Arial';
+      ctxStick.fillText('New Sparkler! 🎆', width / 2, height / 2);
+      
+      ctxStick.font = '20px Arial';
+      ctxStick.fillText('Ещё одну! 🎆', width / 2, height / 2 + 35); // RU
+      ctxStick.fillText('Jeszcze jedną! 🎆', width / 2, height / 2 + 65); // PL
   }
 }
 
 function resetSparkler() {
-    sparkler.burntLength = 0;
-    sparkler.isLit = false;
-    
-    // Return all active sparks to pool
-    while (sparkler.sparks.length > 0) {
-        sparkler.pool.push(sparkler.sparks.pop());
-    }
-    
-    sparkler.x = mouse.x;
-    sparkler.y = mouse.y;
-    
-    // Clear any existing sparks/trails immediately
-    ctxSparks.clearRect(0, 0, width, height);
+    sparkler.drop();
+}
+
+function triggerPickup() {
+    // Start pickup from center bottom
+    const startX = width / 2;
+    const startY = height + 200; 
+    sparkler.pickup(startX, startY, mouse.x, mouse.y);
+}
+
+// ... inside animate loop, after sparkler.update ...
+// Add check for pickup trigger
+// If dropping and out of screen, pickup a new one
+if (sparkler.state === 'DROPPING' && sparkler.y > height + 200) {
+    triggerPickup();
 }
 
 animate();
