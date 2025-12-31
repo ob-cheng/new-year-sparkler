@@ -105,9 +105,10 @@ sparkler.y = mouse.y;
         }
         
         // Drop / New Sparkler on Open Hand
-        if (data.isOpenHand && sparkler.state === 'IDLE') {
-            resetSparkler();
-        }
+        // Disabled per user request (switched to Tap)
+        // if (data.isOpenHand && sparkler.state === 'IDLE') {
+        //    resetSparkler();
+        // }
         
         // Hide Ghost Hand in AR mode
         sparkler.useGhostHand = false;
@@ -220,12 +221,14 @@ function animate() {
           
           if (sparkler.burntLength >= sparkler.length - 1) {
               // Burnt out
-              ctxStick.fillText('Open Hand to Drop 🖐', width / 2, height / 2);
+              ctxStick.fillText('Tap screen to Drop 👆', width / 2, height / 2);
               ctxStick.font = '20px Arial';
               ctxStick.fillText('(Get a new one)', width / 2, height / 2 + 30);
           } else if (!sparkler.isLit) {
               // Fresh
               ctxStick.fillText('Thumbs Up to Light 👍', width / 2, height / 2);
+              ctxStick.font = '20px Arial';
+              ctxStick.fillText('(or Tap screen)', width / 2, height / 2 + 30);
           }
       }
       
