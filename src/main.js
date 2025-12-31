@@ -1,8 +1,8 @@
-import './style.css';
-import { Sparkler } from './Sparkler.js';
-import { SnowSystem } from './Snow.js';
-import { HandTracker } from './HandTracker.js';
-import { BackgroundSystem } from './BackgroundSystem.js';
+import './styles/style.css';
+import { Sparkler } from './entities/Sparkler.js';
+import { SnowSystem } from './systems/SnowSystem.js';
+import { HandTracker } from './systems/HandTracker.js';
+import { BackgroundSystem } from './systems/BackgroundSystem.js';
 
 // 1. Background Canvas (Bottom)
 const canvasBg = document.createElement('canvas');
