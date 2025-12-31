@@ -98,7 +98,12 @@ function animate() {
 function resetSparkler() {
     sparkler.burntLength = 0;
     sparkler.isLit = true;
-    sparkler.sparks = [];
+    
+    // Return all active sparks to pool
+    while (sparkler.sparks.length > 0) {
+        sparkler.pool.push(sparkler.sparks.pop());
+    }
+    
     sparkler.x = mouse.x;
     sparkler.y = mouse.y;
     

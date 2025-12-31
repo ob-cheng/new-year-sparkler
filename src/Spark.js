@@ -1,5 +1,9 @@
 export class Spark {
   constructor(x, y, velocityX, velocityY, color, size, life) {
+    this.reset(x, y, velocityX, velocityY, color, size, life);
+  }
+
+  reset(x, y, velocityX, velocityY, color, size, life) {
     this.x = x;
     this.y = y;
     this.vx = velocityX;

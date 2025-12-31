@@ -18,7 +18,13 @@ export class Sparkler {
     this.prevY = y;
     
     // Sparks
-    this.sparks = [];
+    this.sparks = []; // Active sparks
+    this.pool = [];   // Inactive sparks
+    
+    // Pre-allocate pool
+    for (let i = 0; i < 1000; i++) {
+        this.pool.push(new Spark(0, 0, 0, 0, '#000', 0, 0));
+    }
   }
 
   ignite() {
@@ -46,37 +52,41 @@ export class Sparkler {
     
     // Generate sparks if lit
     if (this.isLit) {
-      const burnX = this.x;
-      const burnY = this.y - (this.length / 2) + this.burntLength; // Calculate tip position relative to center/handle
-      // Actually, let's make (x,y) the handle position.
-      // So the sparkler extends UP from (x,y).
-      // Tip is at (x, y - handleLength - length + burntLength)
-      
       const tipX = this.x;
       const tipY = this.y - this.handleLength - this.length + this.burntLength;
 
       // Create new sparks
       const sparkCount = Math.floor(Math.random() * 10) + 5; // MORE sparks
       for (let i = 0; i < sparkCount; i++) {
-        const speed = Math.random() * 4 + 1;
-        const angle = Math.random() * Math.PI * 2;
-        // Add momentum from movement
-        const vx = Math.cos(angle) * speed + dx * 0.2; 
-        const vy = Math.sin(angle) * speed + dy * 0.2;
-        
-        const color = `hsl(${40 + Math.random() * 20}, 100%, 80%)`; // Gold/Yellow
-        const size = Math.random() * 2 + 0.5;
-        const life = Math.random() * 1.5 + 0.5;
-        
-        this.sparks.push(new Spark(tipX, tipY, vx, vy, color, size, life));
+        if (this.pool.length > 0) {
+            const speed = Math.random() * 4 + 1;
+            const angle = Math.random() * Math.PI * 2;
+            // Add momentum from movement
+            const vx = Math.cos(angle) * speed + dx * 0.2; 
+            const vy = Math.sin(angle) * speed + dy * 0.2;
+            
+            const color = `hsl(${40 + Math.random() * 20}, 100%, 80%)`; // Gold/Yellow
+            const size = Math.random() * 2 + 0.5;
+            const life = Math.random() * 1.5 + 0.5;
+            
+            const spark = this.pool.pop();
+            spark.reset(tipX, tipY, vx, vy, color, size, life);
+            this.sparks.push(spark);
+        }
       }
     }
 
-    // Update existing sparks
+    // Update existing sparks (Optimized loop)
     for (let i = this.sparks.length - 1; i >= 0; i--) {
-        this.sparks[i].update();
-        if (this.sparks[i].life <= 0) {
-            this.sparks.splice(i, 1);
+        const spark = this.sparks[i];
+        spark.update();
+        if (spark.life <= 0) {
+            // Return to pool
+            this.pool.push(spark);
+            // Fast remove (swap with last)
+            const last = this.sparks[this.sparks.length - 1];
+            this.sparks[i] = last;
+            this.sparks.pop();
         }
     }
   }
