@@ -12,8 +12,10 @@ Thankfully, we eventually found some real ones! But I thought this little site p
 
 ## Features
 
--   **Interactive**: Click to light, drag to wave it around.
--   **Realistic**: Particle effects with trails and "fade out" mechanics.
+-   **Interactive**: Click to light, drag to wave it around. Drag speed affects spark direction!
+-   **Realistic Visuals**: Particle effects, "ghost hand" holding the stick, and realistic toss/drop animations.
+-   **Snow Mode**: Toggle a cozy snowing effect with the "Let it Snow" button.
+-   **Multilingual**: Instructions available in English, Russian, and Polish.
 -   **Infinite Fun**: Just click to get a new one when yours burns out.
 -   **Performance Optimized**: Uses object pooling to run smoothly on mobile devices.
 
