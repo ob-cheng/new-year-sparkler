@@ -1,5 +1,6 @@
 import './style.css';
 import { Sparkler } from './Sparkler.js';
+import { SnowSystem } from './Snow.js';
 
 const canvasStick = document.createElement('canvas');
 canvasStick.id = 'canvas-stick';
@@ -9,10 +10,20 @@ const canvasSparks = document.createElement('canvas');
 canvasSparks.id = 'canvas-sparks';
 document.body.appendChild(canvasSparks);
 
+// -- Snow Toggle UI --
+const snowButton = document.createElement('button');
+snowButton.className = 'snow-toggle';
+snowButton.textContent = 'Let it Snow ❄️';
+document.body.appendChild(snowButton);
+
 const ctxStick = canvasStick.getContext('2d');
 const ctxSparks = canvasSparks.getContext('2d');
 
 let width, height;
+// Create Systems
+const sparkler = new Sparkler(0, 0); // Pos updated in resize/init
+const snow = new SnowSystem(window.innerWidth, window.innerHeight);
+
 function resize() {
   width = window.innerWidth;
   height = window.innerHeight;
@@ -20,6 +31,7 @@ function resize() {
   canvasStick.height = height;
   canvasSparks.width = width;
   canvasSparks.height = height;
+  snow.resize(width, height);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -28,8 +40,17 @@ resize();
 const mouse = { x: width / 2, y: height * 0.8 };
 let isInteracting = false;
 
-// Create Sparkler
-const sparkler = new Sparkler(mouse.x, mouse.y);
+// Update initial sparkler pos
+sparkler.x = mouse.x;
+sparkler.y = mouse.y;
+
+// Button Listener
+snowButton.addEventListener('click', (e) => {
+    e.stopPropagation(); // Don't ignite sparkler
+    snow.active = !snow.active;
+    snowButton.classList.toggle('active', snow.active);
+    snowButton.textContent = snow.active ? 'Stop Snowing 🚫' : 'Let it Snow ❄️';
+});
 
 // Input Listeners
 window.addEventListener('mousemove', (e) => {
@@ -55,10 +76,12 @@ function igniteOrReset() {
     }
 }
 
-window.addEventListener('mousedown', igniteOrReset);
+window.addEventListener('mousedown', (e) => {
+    if (e.target === snowButton) return;
+    igniteOrReset();
+});
 window.addEventListener('touchstart', (e) => {
-     // Prevent default to avoid double-firing with mousedown on some devices if needed, but 'passive: false' usually handles scrolling.
-     // We'll call igniteOrReset directly.
+     if (e.target === snowButton) return;
      igniteOrReset();
 }, { passive: false });
 
@@ -67,23 +90,29 @@ window.addEventListener('touchstart', (e) => {
 function animate() {
   requestAnimationFrame(animate);
 
-  // Layer 1: Stick (Bottom) - Clear completely to avoid trails/barcode effect
+  // Layer 1: Stick (Bottom) - Clear completely
   ctxStick.clearRect(0, 0, width, height);
   
-  // Layer 2: Sparks (Top) - Fade out effect for trails
-  ctxSparks.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Increased fade speed for shorter trails
+  // Layer 2: Sparks (Top) - Fade out effect
+  ctxSparks.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
   ctxSparks.globalCompositeOperation = 'destination-out';
   ctxSparks.fillRect(0, 0, width, height);
   ctxSparks.globalCompositeOperation = 'source-over';
 
   // Update logic
   sparkler.update(mouse.x, mouse.y);
+  snow.update();
   
   // Draw logic
+  
+  // Draw Snow on stick layer (crisp, behind sparks hopefully if z-index is right? 
+  // Wait, stick is z-index 1, sparks is 2. So snow on stick layer is behind sparks. Good.)
+  snow.draw(ctxStick);
+  
   sparkler.drawStick(ctxStick);
   sparkler.drawSparks(ctxSparks);
   
-  // Instructions (Draw on Sparks layer so it fades nicely, or Stick layer for crispness? Let's use Stick layer for crispness)
+  // Instructions
   ctxStick.fillStyle = 'rgba(255, 255, 255, 1.0)';
   ctxStick.font = '30px Arial';
   ctxStick.textAlign = 'center';
@@ -97,7 +126,7 @@ function animate() {
 
 function resetSparkler() {
     sparkler.burntLength = 0;
-    sparkler.isLit = true;
+    sparkler.isLit = false;
     
     // Return all active sparks to pool
     while (sparkler.sparks.length > 0) {
