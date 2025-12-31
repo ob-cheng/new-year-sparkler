@@ -80,38 +80,38 @@ window.addEventListener('touchmove', (e) => {
 sparkler.x = mouse.x;
 sparkler.y = mouse.y;
 
-// AR Handler
-handTracker.onLandmarks = (data) => {
-    handPresent = true;
-    // Smooth follow
-    const dx = data.x - sparkler.x;
-    const dy = data.y - sparkler.y;
-    sparkler.x += dx * 0.2;
-    sparkler.y += dy * 0.2;
-    
-    // Auto-ignite on Thumb Up
-    if (data.isThumbUp) lastGesture = 'Thumb Up 👍';
-    else if (data.isOpenHand) lastGesture = 'Open Hand 🖐';
-    else lastGesture = 'Tracking...';
-
-    if (data.isThumbUp && !sparkler.isLit) {
-        sparkler.ignite();
-    }
-    
-    // Drop / New Sparkler on Open Hand
-    // Debounce/Check state to prevent spam
-    if (data.isOpenHand && sparkler.state === 'IDLE') {
-        // Only if burnt or explicitly wanting to drop?
-        // Let's allow drop anytime for "toss away" feel, 
-        // BUT we need to make sure we don't pick it up immediately.
-        // resetSparkler() calls drop(), then main loop triggers pickup if off screen.
-        // We need a cooldown or check.
-        resetSparkler();
-    }
-    
-    // Hide Ghost Hand in AR mode
-    sparkler.useGhostHand = false;
-};
+    // AR Handler
+    handTracker.onLandmarks = (data) => {
+        handPresent = true;
+        
+        // CRITICAL FIX: Only follow hand if IDLE (holding it)
+        // If dropping or picking up, let the animation physics run!
+        if (sparkler.state === 'IDLE') {
+            // Smooth follow
+            const dx = data.x - sparkler.x;
+            const dy = data.y - sparkler.y;
+            sparkler.x += dx * 0.3; // Increased responsiveness slightly
+            sparkler.y += dy * 0.3;
+        }
+        
+        // Debug
+        if (data.isThumbUp) lastGesture = 'Thumb Up 👍';
+        else if (data.isOpenHand) lastGesture = 'Open Hand 🖐';
+        else lastGesture = 'Holding ✊';
+        
+        // Auto-ignite on Thumb Up
+        if (data.isThumbUp && !sparkler.isLit && sparkler.state === 'IDLE') {
+            sparkler.ignite();
+        }
+        
+        // Drop / New Sparkler on Open Hand
+        if (data.isOpenHand && sparkler.state === 'IDLE') {
+            resetSparkler();
+        }
+        
+        // Hide Ghost Hand in AR mode
+        sparkler.useGhostHand = false;
+    };
 
 // Button Listeners
 snowButton.addEventListener('click', (e) => {
@@ -211,38 +211,49 @@ function animate() {
   
   // Instructions
   ctxStick.fillStyle = 'rgba(255, 255, 255, 1.0)';
-  ctxStick.font = '30px Arial';
   ctxStick.textAlign = 'center';
   
-  if (!sparkler.isLit && sparkler.burntLength === 0 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
-      if (arMode) {
-           ctxStick.font = '30px Arial';
-           ctxStick.fillText('Thumbs Up to Light 👍', width / 2, height / 2 - 20);
-           ctxStick.font = '20px Arial';
-           ctxStick.fillText('Open Hand to Drop 🖐', width / 2, height / 2 + 20);
-           
-           // Debug Gesture State
-           ctxStick.font = '16px monospace';
-           ctxStick.fillStyle = 'rgba(200, 255, 200, 0.8)';
-           if (lastGesture) {
-                ctxStick.fillText(`Gesture: ${lastGesture}`, width / 2, height - 50);
-           }
-      } else {
-           ctxStick.font = '30px Arial';
-           ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
-           
-           ctxStick.font = '20px Arial';
-           ctxStick.fillText('Зажигай! ✨', width / 2, height / 2 + 35); // RU
-           ctxStick.fillText('Zapal! ✨', width / 2, height / 2 + 65); // PL
+  // AR Mode Instructions
+  if (arMode) {
+      if (sparkler.state === 'IDLE') {
+          ctxStick.font = '30px Arial';
+          
+          if (sparkler.burntLength >= sparkler.length - 1) {
+              // Burnt out
+              ctxStick.fillText('Open Hand to Drop 🖐', width / 2, height / 2);
+              ctxStick.font = '20px Arial';
+              ctxStick.fillText('(Get a new one)', width / 2, height / 2 + 30);
+          } else if (!sparkler.isLit) {
+              // Fresh
+              ctxStick.fillText('Thumbs Up to Light 👍', width / 2, height / 2);
+          }
       }
       
-  } else if (!sparkler.isLit && sparkler.burntLength >= sparkler.length - 1 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
-      ctxStick.font = '30px Arial';
-      ctxStick.fillText('New Sparkler! 🎆', width / 2, height / 2);
+      // Debug Gesture State
+      ctxStick.font = '16px monospace';
+      ctxStick.fillStyle = 'rgba(200, 255, 200, 0.8)';
+      if (lastGesture) {
+           ctxStick.fillText(`Gesture: ${lastGesture}`, width / 2, height - 50);
+      }
       
-      ctxStick.font = '20px Arial';
-      ctxStick.fillText('Ещё одну! 🎆', width / 2, height / 2 + 35); // RU
-      ctxStick.fillText('Jeszcze jedną! 🎆', width / 2, height / 2 + 65); // PL
+  } else {
+      // Mouse Mode Instructions
+      if (!sparkler.isLit && sparkler.burntLength === 0 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
+          ctxStick.font = '30px Arial';
+          ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
+          
+          ctxStick.font = '20px Arial';
+          ctxStick.fillText('Зажигай! ✨', width / 2, height / 2 + 35); // RU
+          ctxStick.fillText('Zapal! ✨', width / 2, height / 2 + 65); // PL
+          
+      } else if (!sparkler.isLit && sparkler.burntLength >= sparkler.length - 1 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
+          ctxStick.font = '30px Arial';
+          ctxStick.fillText('New Sparkler! 🎆', width / 2, height / 2);
+          
+          ctxStick.font = '20px Arial';
+          ctxStick.fillText('Ещё одну! 🎆', width / 2, height / 2 + 35); // RU
+          ctxStick.fillText('Jeszcze jedną! 🎆', width / 2, height / 2 + 65); // PL
+      }
   }
 }
 

@@ -142,8 +142,9 @@ export class HandTracker {
       const isRingOpen = isExtended(landmarks[16], landmarks[14]);
       const isPinkyOpen = isExtended(landmarks[20], landmarks[18]);
       
-      // Simple openness: 4 fingers extended
-      const isOpenHand = isIndexOpen && isMiddleOpen && isRingOpen && isPinkyOpen;
+      // Simple openness: 3 main fingers extended (Index, Middle, Ring)
+      // Pinky is often hard to detect or user keeps it curled fancy style.
+      const isOpenHand = isIndexOpen && isMiddleOpen && isRingOpen; // Relaxed requirement
 
       if (this.onLandmarks) {
         this.onLandmarks({
