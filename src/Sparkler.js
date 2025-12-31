@@ -207,12 +207,18 @@ export class Sparkler {
     const fuelTopY = handleTopY - this.length;
     
     // 1. Draw Stick (Metal Wire) - Metallic Gradient
-    const wireGrad = ctx.createLinearGradient(-2, 0, 2, 0); // Horizontal gradient for cylinder
-    wireGrad.addColorStop(0, '#555');
-    wireGrad.addColorStop(0.4, '#aaa'); // Highlight
-    wireGrad.addColorStop(1, '#444');
+    // Cache gradients if not exists or if checking logic is too complex, 
+    // actually they are relative to 0,0 (translated context).
+    // So they are constant!
     
-    ctx.strokeStyle = wireGrad;
+    if (!this.wireGrad) {
+         this.wireGrad = ctx.createLinearGradient(-2, 0, 2, 0); 
+         this.wireGrad.addColorStop(0, '#555');
+         this.wireGrad.addColorStop(0.4, '#aaa'); 
+         this.wireGrad.addColorStop(1, '#444');
+    }
+    
+    ctx.strokeStyle = this.wireGrad;
     ctx.lineWidth = this.thickness;
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -221,14 +227,15 @@ export class Sparkler {
 
     // 2. Draw Unburnt Fuel (Textured)
     if (this.burntLength < this.length) {
-        // Create Fuel Gradient (Dark gray bumpy)
-        const fuelGrad = ctx.createLinearGradient(-3, 0, 3, 0);
-        fuelGrad.addColorStop(0, '#333');
-        fuelGrad.addColorStop(0.3, '#555');
-        fuelGrad.addColorStop(0.5, '#444');
-        fuelGrad.addColorStop(1, '#222');
+        if (!this.fuelGrad) {
+             this.fuelGrad = ctx.createLinearGradient(-3, 0, 3, 0);
+             this.fuelGrad.addColorStop(0, '#333');
+             this.fuelGrad.addColorStop(0.3, '#555');
+             this.fuelGrad.addColorStop(0.5, '#444');
+             this.fuelGrad.addColorStop(1, '#222');
+        }
         
-        ctx.strokeStyle = fuelGrad;
+        ctx.strokeStyle = this.fuelGrad;
         ctx.lineWidth = this.thickness + 3; // Thicker fuel
         ctx.beginPath();
         
