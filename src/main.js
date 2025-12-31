@@ -1,6 +1,7 @@
 import './style.css';
 import { Sparkler } from './Sparkler.js';
 import { SnowSystem } from './Snow.js';
+import { HandTracker } from './HandTracker.js';
 
 const canvasStick = document.createElement('canvas');
 canvasStick.id = 'canvas-stick';
@@ -10,11 +11,27 @@ const canvasSparks = document.createElement('canvas');
 canvasSparks.id = 'canvas-sparks';
 document.body.appendChild(canvasSparks);
 
+// -- UI Container --
+const uiContainer = document.createElement('div');
+uiContainer.style.position = 'absolute';
+uiContainer.style.top = '10px';
+uiContainer.style.right = '10px';
+uiContainer.style.zIndex = '100';
+uiContainer.style.display = 'flex';
+uiContainer.style.gap = '10px';
+document.body.appendChild(uiContainer);
+
 // -- Snow Toggle UI --
 const snowButton = document.createElement('button');
-snowButton.className = 'snow-toggle';
+snowButton.className = 'ui-button';
 snowButton.textContent = 'Let it Snow ❄️';
-document.body.appendChild(snowButton);
+uiContainer.appendChild(snowButton);
+
+// -- AR Toggle UI --
+const arButton = document.createElement('button');
+arButton.className = 'ui-button';
+arButton.textContent = 'Enable AR 🪄';
+uiContainer.appendChild(arButton);
 
 const ctxStick = canvasStick.getContext('2d');
 const ctxSparks = canvasSparks.getContext('2d');
@@ -23,6 +40,9 @@ let width, height;
 // Create Systems
 const sparkler = new Sparkler(0, 0); // Pos updated in resize/init
 const snow = new SnowSystem(window.innerWidth, window.innerHeight);
+const handTracker = new HandTracker();
+let arMode = false;
+let handPresent = false; 
 
 function resize() {
   width = window.innerWidth;
@@ -38,36 +58,88 @@ resize();
 
 // Interaction State
 const mouse = { x: width / 2, y: height * 0.8 };
-let isInteracting = false;
-
-// Update initial sparkler pos
-sparkler.x = mouse.x;
-sparkler.y = mouse.y;
-
-// Button Listener
-snowButton.addEventListener('click', (e) => {
-    e.stopPropagation(); // Don't ignite sparkler
-    snow.active = !snow.active;
-    snowButton.classList.toggle('active', snow.active);
-    snowButton.textContent = snow.active ? 'Stop Snowing 🚫' : 'Let it Snow ❄️';
-});
-
 // Input Listeners
+let isInteracting = false; 
+
 window.addEventListener('mousemove', (e) => {
     isInteracting = true;
+    if (arMode && handPresent) return;
     mouse.x = e.clientX;
     mouse.y = e.clientY;
 });
 window.addEventListener('touchmove', (e) => {
     isInteracting = true;
+    if (arMode && handPresent) return;
     e.preventDefault();
     mouse.x = e.touches[0].clientX;
     mouse.y = e.touches[0].clientY;
 }, { passive: false });
 
+// Update initial sparkler pos
+sparkler.x = mouse.x;
+sparkler.y = mouse.y;
+
+// AR Handler
+handTracker.onLandmarks = (data) => {
+    handPresent = true;
+    // Smooth follow
+    const dx = data.x - sparkler.x;
+    const dy = data.y - sparkler.y;
+    sparkler.x += dx * 0.2;
+    sparkler.y += dy * 0.2;
+    
+    // Auto-ignite on Thumb Up
+    if (data.isThumbUp && !sparkler.isLit) {
+        sparkler.ignite();
+    }
+    
+    // Hide Ghost Hand in AR mode
+    sparkler.useGhostHand = false;
+};
+
+// Button Listeners
+snowButton.addEventListener('click', (e) => {
+    e.stopPropagation(); 
+    snow.active = !snow.active;
+    snowButton.classList.toggle('active', snow.active);
+    snowButton.textContent = snow.active ? 'Stop Snowing 🚫' : 'Let it Snow ❄️';
+});
+
+arButton.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    arMode = !arMode;
+    arButton.classList.toggle('active', arMode);
+    
+    if (arMode) {
+        arButton.textContent = 'Loading Camera... 📷';
+        try {
+            await handTracker.start((data) => {
+                // Determine logic
+                handPresent = true;
+                // Direct mapping for responsiveness in AR
+                sparkler.x = data.x;
+                sparkler.y = data.y;
+                 if (data.isThumbUp && !sparkler.isLit) {
+                    sparkler.ignite();
+                }
+                sparkler.useGhostHand = false;
+            });
+             arButton.textContent = 'Disable AR ❌';
+        } catch (err) {
+            console.error(err);
+            arButton.textContent = 'Camera Failed ⚠️';
+            arMode = false;
+        }
+    } else {
+        handTracker.stop();
+        handPresent = false;
+        sparkler.useGhostHand = true; 
+        arButton.textContent = 'Enable AR 🪄';
+    }
+});
+
 function igniteOrReset() {
     if (!sparkler.isLit) {
-        // If it hasn't even started or is fully burnt out (allowing small margin for error)
         if (sparkler.burntLength >= sparkler.length - 1) {
              resetSparkler();
         } else {
@@ -77,11 +149,11 @@ function igniteOrReset() {
 }
 
 window.addEventListener('mousedown', (e) => {
-    if (e.target === snowButton) return;
+    if (e.target.tagName === 'BUTTON') return;
     igniteOrReset();
 });
 window.addEventListener('touchstart', (e) => {
-     if (e.target === snowButton) return;
+     if (e.target.tagName === 'BUTTON') return;
      igniteOrReset();
 }, { passive: false });
 
@@ -105,13 +177,17 @@ function animate() {
      triggerPickup();
   }
   
-  sparkler.update(mouse.x, mouse.y);
+  let targetX = mouse.x;
+  let targetY = mouse.y;
+  if (arMode && handPresent) {
+      targetX = sparkler.x; 
+      targetY = sparkler.y;
+  }
+  
+  sparkler.update(targetX, targetY);
   snow.update();
   
   // Draw logic
-  
-  // Draw Snow on stick layer (crisp, behind sparks hopefully if z-index is right? 
-  // Wait, stick is z-index 1, sparks is 2. So snow on stick layer is behind sparks. Good.)
   snow.draw(ctxStick);
   
   sparkler.drawStick(ctxStick);
@@ -123,12 +199,17 @@ function animate() {
   ctxStick.textAlign = 'center';
   
   if (!sparkler.isLit && sparkler.burntLength === 0 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
-      ctxStick.font = '30px Arial';
-      ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
-      
-      ctxStick.font = '20px Arial';
-      ctxStick.fillText('Зажигай! ✨', width / 2, height / 2 + 35); // RU
-      ctxStick.fillText('Zapal! ✨', width / 2, height / 2 + 65); // PL
+      if (arMode) {
+           ctxStick.font = '30px Arial';
+           ctxStick.fillText('Thumbs Up to Light! 👍', width / 2, height / 2);
+      } else {
+           ctxStick.font = '30px Arial';
+           ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
+           
+           ctxStick.font = '20px Arial';
+           ctxStick.fillText('Зажигай! ✨', width / 2, height / 2 + 35); // RU
+           ctxStick.fillText('Zapal! ✨', width / 2, height / 2 + 65); // PL
+      }
       
   } else if (!sparkler.isLit && sparkler.burntLength >= sparkler.length - 1 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
       ctxStick.font = '30px Arial';
@@ -148,14 +229,17 @@ function triggerPickup() {
     // Start pickup from center bottom
     const startX = width / 2;
     const startY = height + 200; 
-    sparkler.pickup(startX, startY, mouse.x, mouse.y);
+    
+    let tx = mouse.x;
+    let ty = mouse.y;
+    if (arMode && handPresent) {
+        tx = sparkler.x; 
+        ty = sparkler.y; 
+    }
+    
+    sparkler.pickup(startX, startY, tx, ty);
 }
 
-// ... inside animate loop, after sparkler.update ...
-// Add check for pickup trigger
-// If dropping and out of screen, pickup a new one
-if (sparkler.state === 'DROPPING' && sparkler.y > height + 200) {
-    triggerPickup();
-}
+// ... inside animate loop logic above covers this ...
 
 animate();

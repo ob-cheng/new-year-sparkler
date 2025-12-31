@@ -26,6 +26,7 @@ export class Sparkler {
     // Hand Image
     this.handImg = new Image();
     this.handImg.src = '/hand.png'; // Hand asset
+    this.useGhostHand = true; // Flag to toggle it
     
     // Sparks
     this.sparks = []; // Active sparks
@@ -167,7 +168,7 @@ export class Sparkler {
     ctx.rotate(this.angle);
 
     // [Draw Hand logic remains same, hidden for brevity here if unchanged]
-    if (this.handImg.complete && this.handImg.naturalWidth > 0 && this.state !== 'DROPPING') {
+    if (this.useGhostHand && this.handImg.complete && this.handImg.naturalWidth > 0 && this.state !== 'DROPPING') {
          ctx.save();
          ctx.globalAlpha = 0.5;
          const scale = 0.3;
