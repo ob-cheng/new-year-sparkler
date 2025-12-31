@@ -101,7 +101,7 @@ export class HandTracker {
       
       const thumbTip = landmarks[4];
       const thumbIP = landmarks[3];
-      const indexTip = landmarks[8];
+      // indexTip already defined above
       const middleTip = landmarks[12];
       const ringTip = landmarks[16];
       const pinkyTip = landmarks[20];
