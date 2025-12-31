@@ -2,16 +2,51 @@ import './style.css';
 import { Sparkler } from './Sparkler.js';
 import { SnowSystem } from './Snow.js';
 import { HandTracker } from './HandTracker.js';
+import { BackgroundSystem } from './BackgroundSystem.js';
 
-const canvasStick = document.createElement('canvas');
+// 1. Background Canvas (Bottom)
+const canvasBg = document.createElement('canvas');
+canvasBg.id = 'canvas-bg';
+document.body.appendChild(canvasBg);
+
+// 2. Stick Canvas (Middle)
+const canvasStick = document.createElement('canvas'); // ... existing code ...
 canvasStick.id = 'canvas-stick';
 document.body.appendChild(canvasStick);
 
-const canvasSparks = document.createElement('canvas');
+// 3. Sparks Canvas (Top)
+const canvasSparks = document.createElement('canvas'); // ... existing code ...
 canvasSparks.id = 'canvas-sparks';
 document.body.appendChild(canvasSparks);
 
-// -- UI Overlay Structure --
+// ... UI Code ...
+
+const ctxBg = canvasBg.getContext('2d');
+const ctxStick = canvasStick.getContext('2d');
+const ctxSparks = canvasSparks.getContext('2d');
+
+let width, height;
+// Create Systems
+const sparkler = new Sparkler(0, 0); 
+const snow = new SnowSystem(window.innerWidth, window.innerHeight);
+const bgSystem = new BackgroundSystem(window.innerWidth, window.innerHeight);
+const handTracker = new HandTracker();
+let arMode = false;
+let handPresent = false; 
+let lastGesture = ''; 
+
+function resize() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvasBg.width = width; // Resize Bg
+  canvasBg.height = height;
+  canvasStick.width = width;
+  canvasStick.height = height;
+  canvasSparks.width = width;
+  canvasSparks.height = height;
+  snow.resize(width, height);
+  bgSystem.resize(width, height);
+}
 const uiOverlay = document.createElement('div');
 uiOverlay.id = 'ui-overlay';
 uiOverlay.innerHTML = `
@@ -215,12 +250,24 @@ function updateUI() {
 function animate() {
   requestAnimationFrame(animate);
 
+  // Layer 0: Background (Deep Blue + Lamps)
+  // Only draw if NOT in AR mode
+  if (!arMode) {
+     bgSystem.update();
+     bgSystem.draw(ctxBg);
+  } else {
+     ctxBg.clearRect(0, 0, width, height); // Clear BG for Camera
+  }
+
+  // Layer 1: Stick (Bottom) - Clear completely (transparent)
   ctxStick.clearRect(0, 0, width, height);
   
+  // Layer 2: Sparks
   ctxSparks.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
   ctxSparks.globalCompositeOperation = 'destination-out';
   ctxSparks.fillRect(0, 0, width, height);
   ctxSparks.globalCompositeOperation = 'source-over';
+  // ... rest of loop ...
 
   if (sparkler.state === 'DROPPING' && sparkler.y > height + 200) {
      triggerPickup();
