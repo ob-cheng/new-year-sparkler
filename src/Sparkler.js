@@ -81,7 +81,7 @@ export class Sparkler {
     }
   }
 
-  draw(ctx) {
+  drawStick(ctx) {
     // Draw Sparkler Stick
     // Handle (Bottom)
     ctx.lineWidth = this.thickness;
@@ -108,10 +108,6 @@ export class Sparkler {
 
     // Draw Unburnt Fuel (Gray)
     // From fuelTopY down to fuelTopY + (length - burntLength)
-    // Actually it burns from top down. 
-    // Top is fuelTopY. Bottom of fuel is handleTopY.
-    // If burntLength is 0, full fuel.
-    // We draw from (fuelTopY + burntLength) to handleTopY
     if (this.burntLength < this.length) {
         ctx.strokeStyle = '#777';
         ctx.lineWidth = this.thickness + 2; // Fuel is thicker
@@ -135,7 +131,9 @@ export class Sparkler {
         ctx.fill();
         ctx.shadowBlur = 0; // Reset
     }
+  }
 
+  drawSparks(ctx) {
     // Draw Sparks
     // Use lighter composite for additive color mixing (fire effect)
     ctx.globalCompositeOperation = 'lighter';

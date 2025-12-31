@@ -29,4 +29,13 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none; /* Let events pass through to window/body if needed, or handle layer */
+}
+
+/* Ensure background is strictly black on body, canvases transparent */
+#canvas-stick {
+  z-index: 1;
+}
+#canvas-sparks {
+  z-index: 2;
 }
