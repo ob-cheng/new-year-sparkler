@@ -173,12 +173,30 @@ function igniteOrReset() {
     }
 }
 
+const uiDock = document.getElementById('ui-dock'); // Helper to check containment
+
 window.addEventListener('mousedown', (e) => {
     if (e.target.closest('.dock-button')) return;
+    
+    // Check Background Handler first (only if not in AR)
+    if (!arMode) {
+        if (bgSystem.handleClick(e.clientX, e.clientY)) {
+            return; // If lamp clicked, don't ignite sparkler
+        }
+    }
+    
     igniteOrReset();
 });
 window.addEventListener('touchstart', (e) => {
      if (e.target.closest('.dock-button')) return;
+     
+     if (!arMode) {
+        const touch = e.touches[0];
+        if (bgSystem.handleClick(touch.clientX, touch.clientY)) {
+            return; 
+        }
+    }
+     
      igniteOrReset();
 }, { passive: false });
 

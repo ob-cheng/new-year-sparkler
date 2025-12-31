@@ -56,48 +56,99 @@ export class BackgroundSystem {
         this.lamplighter.state = 'WALKING';
     }
 
+    handleClick(x, y) {
+        // Check collision with lamp heads
+        for (let i = 0; i < this.lamps.length; i++) {
+            const lamp = this.lamps[i];
+            const headY = lamp.y - lamp.height;
+            // Simple hitbox around the light cage
+            if (x > lamp.x - 30 && x < lamp.x + 30 && y > headY - 50 && y < headY + 20) {
+                if (lamp.isLit) {
+                    lamp.isLit = false;
+                    lamp.glow = 0;
+                    return true; // Handled
+                }
+            }
+        }
+        return false;
+    }
+
     update() {
         // Update Lamps (Glow animation)
-        this.lamps.forEach(lamp => {
+        let unlitIndex = -1;
+        this.lamps.forEach((lamp, index) => {
             if (lamp.isLit && lamp.glow < 1) {
                 lamp.glow += 0.05;
+            }
+            if (!lamp.isLit) {
+                // Find priority target (closest unlit lamp preferred, or just first)
+                if (unlitIndex === -1) unlitIndex = index;
             }
         });
 
         // Update Lamplighter
         const walker = this.lamplighter;
         
-        if (walker.targetIndex < this.lamps.length) {
-            const targetLamp = this.lamps[walker.targetIndex];
-            const targetX = targetLamp.x - 20; // Stand slightly left of lamp
-
-            if (walker.state === 'WALKING') {
-                const speed = 2; // Pixel per frame
-                if (walker.x < targetX) {
-                    walker.x += speed;
-                } else {
-                    walker.x = targetX;
-                    walker.state = 'LIGHTING';
-                    walker.timer = 0;
-                }
-            } else if (walker.state === 'LIGHTING') {
-                walker.timer++;
-                // Animation timing: Reach up (30 frames), Light (onset), Lower (30 frames)
-                if (walker.timer === 30) {
-                    targetLamp.isLit = true;
-                }
-                if (walker.timer > 60) {
-                    walker.state = 'WALKING';
-                    walker.targetIndex++;
+        // 1. Determine Target
+        if (unlitIndex !== -1) {
+            // Priority: Light the lamps!
+            walker.targetIndex = unlitIndex;
+            if (walker.state === 'IDLE' || walker.state === 'LEAVING') {
+                walker.state = 'WALKING';
+                // If he was leaving/gone, make sure he's visible
+                if (walker.x > this.width + 50) {
+                    walker.x = this.width + 50; // Come from right
+                } else if (walker.x < -50) {
+                    walker.x = -50; // Come from left
                 }
             }
         } else {
-            // Walk off screen
-            walker.x += 2;
-            if (walker.x > this.width + 100) {
-                // Reset sequence after a delay? Or keep lit?
-                // Let's keep them lit for a cozy vibe, maybe reset if desired.
-                // For now, he just walks away.
+            // All lit? Leave.
+            if (walker.state !== 'LIGHTING') {
+                 walker.state = 'LEAVING';
+            }
+        }
+
+        // 2. Move / Act
+        if (walker.state === 'WALKING' || walker.state === 'LEAVING') {
+            let targetX;
+            if (walker.state === 'LEAVING') {
+                targetX = this.width + 100; // Walk off right
+            } else {
+                 // Target specific lamp
+                 const targetLamp = this.lamps[walker.targetIndex];
+                 targetX = targetLamp.x - 20; 
+            }
+            
+            // Move towards target
+            const dx = targetX - walker.x;
+            const speed = 3; // Hurry up if fixing!
+            
+            if (Math.abs(dx) < speed) {
+                walker.x = targetX;
+                if (walker.state === 'WALKING') {
+                    walker.state = 'LIGHTING';
+                    walker.timer = 0;
+                }
+            } else {
+                walker.x += Math.sign(dx) * speed;
+                // Face direction
+                walker.direction = Math.sign(dx);
+            }
+            
+        } else if (walker.state === 'LIGHTING') {
+            walker.timer++;
+            // Animation timing: Reach up (30 frames), Light (onset), Lower (30 frames)
+            if (walker.timer === 30) {
+                if (this.lamps[walker.targetIndex]) {
+                     this.lamps[walker.targetIndex].isLit = true;
+                }
+            }
+            if (walker.timer > 60) {
+                // Job done, check next state in next frame
+                walker.state = 'WALKING'; 
+                // Note: Next frame's logic will pick up if there are more unlit lamps
+                // or switch to LEAVING if all done.
             }
         }
         
