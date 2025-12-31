@@ -26,10 +26,14 @@ const ctxStick = canvasStick.getContext('2d');
 const ctxSparks = canvasSparks.getContext('2d');
 
 let width, height;
+// Detect Mobile (Simple width check or User Agent)
+const isMobile = window.innerWidth < 600 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // Create Systems
-const sparkler = new Sparkler(0, 0); 
+// Pass quality settings
+const sparkler = new Sparkler(0, 0, isMobile); 
 const snow = new SnowSystem(window.innerWidth, window.innerHeight);
-const bgSystem = new BackgroundSystem(window.innerWidth, window.innerHeight);
+const bgSystem = new BackgroundSystem(window.innerWidth, window.innerHeight, isMobile);
 const handTracker = new HandTracker();
 let arMode = false;
 let handPresent = false; 

@@ -1,7 +1,8 @@
 export class BackgroundSystem {
-    constructor(width, height) {
+    constructor(width, height, isMobile = false) {
         this.width = width;
         this.height = height;
+        this.isMobile = isMobile;
         this.lamps = [];
         this.lamplighter = {
             x: -50,
@@ -15,7 +16,8 @@ export class BackgroundSystem {
         
         // Stars
         this.stars = [];
-        for(let i=0; i<50; i++) {
+        const starCount = isMobile ? 30 : 50; // Slight reduction fine
+        for(let i=0; i<starCount; i++) {
             this.stars.push({
                 x: Math.random() * width,
                 y: Math.random() * height * 0.6,
@@ -23,6 +25,17 @@ export class BackgroundSystem {
                 alpha: Math.random()
             });
         }
+        
+        // Cache Lamp Glow
+        this.lampGlow = document.createElement('canvas');
+        this.lampGlow.width = 120;
+        this.lampGlow.height = 120;
+        const ctx = this.lampGlow.getContext('2d');
+        const glowGrad = ctx.createRadialGradient(60, 60, 5, 60, 60, 60);
+        glowGrad.addColorStop(0, 'rgba(255, 200, 50, 1)'); // Base alpha 1, mod later
+        glowGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0,0,120,120);
     }
 
     resize(width, height) {
@@ -238,11 +251,11 @@ export class BackgroundSystem {
         if (lamp.isLit) {
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
-            const glowGrad = ctx.createRadialGradient(x, headY - headH/2, 5, x, headY - headH/2, 60);
-            glowGrad.addColorStop(0, `rgba(255, 200, 50, ${lamp.glow})`);
-            glowGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
-            ctx.fillStyle = glowGrad;
-            ctx.fillRect(x - 60, headY - headH/2 - 60, 120, 120);
+            
+            // Use cached sprite with alpha
+            ctx.globalAlpha = lamp.glow; 
+            ctx.drawImage(this.lampGlow, x - 60, headY - headH/2 - 60);
+            
             ctx.restore();
         }
     }

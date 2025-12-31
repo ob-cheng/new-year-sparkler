@@ -1,9 +1,11 @@
 import { Spark } from './Spark.js';
 
 export class Sparkler {
-  constructor(x, y) {
+  constructor(x, y, isMobile = false) {
     this.x = x;
     this.y = y;
+    this.isMobile = isMobile;
+    
     // Physical properties
     this.length = 150; // Length of the burnt part + unburnt part
     this.handleLength = 50;
@@ -28,18 +30,55 @@ export class Sparkler {
     this.handImg.src = '/hand.png'; // Hand asset
     this.useGhostHand = true; // Flag to toggle it
     
-    // Sparks
-    this.sparks = []; // Active sparks
-    this.pool = [];   // Inactive sparks
+    // Performance Tuning
+    // Mobile: 600 sparks (plenty for retina). Desktop: 1000.
+    const maxSparks = isMobile ? 600 : 1200;
     
     // Pre-allocate pool
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < maxSparks; i++) {
         this.pool.push(new Spark(0, 0, 0, 0, 0, 0));
     }
+    
+    // Cache the Glow Effect (Offscreen Canvas)
+    // ShadowBlur is extremely expensive on iOS/Mobile. Sprites are free.
+    this.glowSprite = document.createElement('canvas');
+    this.glowSprite.width = 64;
+    this.glowSprite.height = 64;
+    const gCtx = this.glowSprite.getContext('2d');
+    
+    // Draw the glow ONCE
+    // 1. Core
+    gCtx.shadowColor = '#ff6600';
+    gCtx.shadowBlur = 15;
+    gCtx.fillStyle = 'rgba(255, 200, 0, 0.8)';
+    gCtx.beginPath();
+    gCtx.arc(32, 32, 6, 0, Math.PI * 2);
+    gCtx.fill();
+    gCtx.shadowBlur = 0;
+    
+    // 2. Extra bloom ring for premium feel (baked in)
+    const bloom = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    bloom.addColorStop(0, 'rgba(255, 100, 0, 0.2)');
+    bloom.addColorStop(1, 'rgba(255, 100, 0, 0)');
+    gCtx.fillStyle = bloom;
+    gCtx.fillRect(0,0,64,64);
   }
 
   ignite() {
     this.isLit = true;
+  }
+  // ... (rest of methods unchanged until drawStick) ...
+
+  update(mouseX, mouseY) {
+     // ... (keep update logic, ensuring spark count uses isMobile check safely) ...
+     // Re-implementing update to ensure code continuity if snippet was large. 
+     // Actually I should just target the Constructor and DrawStick separately to be safe.
+     // But tool asks for contiguous block.
+     // I will split this into two tool calls if needed, or careful selection.
+     
+     // Let's just do Constructor first.
+     // Wait, I can't do partial method replacement easily without context.
+     // I will stick to the plan: Modify Constructor to add sprite.
   }
 
   drop() {
@@ -143,10 +182,14 @@ export class Sparkler {
       // Burstiness: Randomly spawn MANY or FEW
       // 10% chance of a big burst (pop)
       let sparkCount = Math.floor(Math.random() * 5); 
-      if (Math.random() < 0.1) sparkCount = 20 + Math.floor(Math.random() * 20); 
+      
+      if (Math.random() < 0.1) {
+          sparkCount = 20 + Math.floor(Math.random() * 20);
+      }
       
       for (let i = 0; i < sparkCount; i++) {
         if (this.pool.length > 0) {
+            // ... (physics logic same) ...
             // Ejection physics
             // High velocity, radial + distinct directional bias
             const speed = Math.random() * 6 + 2;
@@ -252,20 +295,13 @@ export class Sparkler {
         const tipY = fuelTopY + this.burntLength;
         
         // Inner intense white hot
-        ctx.shadowBlur = 0;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(0, tipY, 3, 0, Math.PI * 2);
         ctx.fill();
         
-        // Outer glow
-        ctx.shadowColor = '#ff6600';
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = 'rgba(255, 200, 0, 0.8)';
-        ctx.beginPath();
-        ctx.arc(0, tipY, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        // Outer Glow (Cached Sprite)
+        ctx.drawImage(this.glowSprite, -32, tipY - 32);
     }
     
     ctx.restore();
