@@ -1,23 +1,39 @@
-# New Year Sparkler 🎆
-
-A virtual sparkler experience for the web.
-
-**[Live Demo](https://ob-cheng.github.io/new-year-sparkler/)**
+<div align="center">
+  <img src="public/icon.png" width="128" placeholder="Sparkler Icon">
+  <h1>New Year Sparkler 🎆</h1>
+  <p>A magical, virtual sparkler experience for the web.</p>
+  
+  [![Try Online](https://img.shields.io/badge/Try_Online-Active-success?style=for-the-badge&logo=github)](https://ob-cheng.github.io/new-year-sparkler/)
+</div>
 
 ## The Story
 
-I built this project for my little brother who absolutely loves New Year sparklers. We initially thought they were completely sold out in stores, so I wanted to make sure he could still have his sparkler fun digitally.
+I built this project for my little brother who **absolutely loves** New Year sparklers. We initially thought they were completely sold out in stores, so I wanted to make sure he could still have his sparkler fun digitally.
 
 Thankfully, we eventually found some real ones! But I thought this little site played out so nicely that I still wanted to share it with the world.
 
+<div align="center">
+  <img src="public/team.png" width="80%" alt="Me and my brother enjoying sparklers">
+  <p><em>The Dream Team</em></p>
+</div>
+
 ## Features
 
--   **Interactive**: Click to light, drag to wave it around. Drag speed affects spark direction!
--   **Realistic Visuals**: Particle effects, "ghost hand" holding the stick, and realistic toss/drop animations.
--   **Snow Mode**: Toggle a cozy snowing effect with the "Let it Snow" button.
--   **Multilingual**: Instructions available in English, Russian, and Polish.
--   **Infinite Fun**: Just click to get a new one when yours burns out.
--   **Performance Optimized**: Uses object pooling to run smoothly on mobile devices.
+-   **Interactive**: Click to light, drag to wave it around. Stick tilts with inertia!
+-   **Realistic Physics**: Particle effects, "ghost hand", toss/drop animations, and waving mechanics.
+-   **Magic Background**: A procedural "Lamplighter" background where a silhouette lights vintage lamps.
+-   **Snow Mode**: Toggle a cozy snowing effect.
+-   **AR Mode**: Use your webcam to hold the virtual sparkler (powered by MediaPipe).
+-   **Multilingual**: Instructions in English, Russian, and Polish.
+
+## Tools Used
+
+This project was built with:
+-   **Vite**: Fast frontend tooling.
+-   **HTML5 Canvas**: For high-performance particle rendering.
+-   **MediaPipe Hands**: For Augmented Reality hand tracking.
+-   **Google Fonts**: 'Inter' for clean typography.
+-   **GitHub Pages**: For instant deployment.
 
 ## Running Locally
 
