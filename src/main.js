@@ -120,6 +120,7 @@ arButton.addEventListener('click', async (e) => {
     if (arMode) {
         mainText.textContent = '';
         subText.textContent = 'Loading Camera...';
+        document.body.style.backgroundImage = 'none'; // Hide BG for AR
         try {
             await handTracker.start((data) => {
                 handPresent = true;
@@ -143,6 +144,7 @@ arButton.addEventListener('click', async (e) => {
         sparkler.useGhostHand = true; 
         arButton.innerHTML = '<span class="icon">🪄</span> AR Mode';
         lastGesture = '';
+        document.body.style.backgroundImage = ''; // Restore CSS default
     }
 });
 
