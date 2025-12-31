@@ -2,6 +2,7 @@
   "name": "firework",
   "private": true,
   "version": "0.0.0",
+  "description": "A virtual interactive New Year sparkler experience.",
   "type": "module",
   "scripts": {
     "dev": "vite",
