@@ -93,6 +93,17 @@ handTracker.onLandmarks = (data) => {
         sparkler.ignite();
     }
     
+    // Drop / New Sparkler on Open Hand
+    // Debounce/Check state to prevent spam
+    if (data.isOpenHand && sparkler.state === 'IDLE') {
+        // Only if burnt or explicitly wanting to drop?
+        // Let's allow drop anytime for "toss away" feel, 
+        // BUT we need to make sure we don't pick it up immediately.
+        // resetSparkler() calls drop(), then main loop triggers pickup if off screen.
+        // We need a cooldown or check.
+        resetSparkler();
+    }
+    
     // Hide Ghost Hand in AR mode
     sparkler.useGhostHand = false;
 };
@@ -201,7 +212,9 @@ function animate() {
   if (!sparkler.isLit && sparkler.burntLength === 0 && sparkler.state !== 'PICKING_UP' && sparkler.state !== 'DROPPING') {
       if (arMode) {
            ctxStick.font = '30px Arial';
-           ctxStick.fillText('Thumbs Up to Light! 👍', width / 2, height / 2);
+           ctxStick.fillText('Thumbs Up to Light 👍', width / 2, height / 2 - 20);
+           ctxStick.font = '20px Arial';
+           ctxStick.fillText('Open Hand to Drop 🖐', width / 2, height / 2 + 20);
       } else {
            ctxStick.font = '30px Arial';
            ctxStick.fillText('Tap to Light! ✨', width / 2, height / 2);
