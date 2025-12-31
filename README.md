@@ -2,6 +2,8 @@
 
 A virtual sparkler experience for the web.
 
+**[Live Demo](https://ob-cheng.github.io/new-year-sparkler/)**
+
 ## The Story
 
 I built this project for my little brother who absolutely loves New Year sparklers. We initially thought they were completely sold out in stores, so I wanted to make sure he could still have his sparkler fun digitally.
