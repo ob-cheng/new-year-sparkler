@@ -12,7 +12,7 @@
 
 I built this project for my little brother who absolutely loves New Year sparklers. We initially thought they were completely sold out in stores, so I wanted to make sure he could still have his sparkler fun digitally.
 
-The "Lamplighter" in the background is inspired by the real tradition in **Brest, Belarus** (where we are from), where a local lamplighter manually lights kerosene lamps on Sovetskaya Street every single evening.
+The "Lamplighter" in the background is inspired by the real tradition in **Brest, Belarus** (where he was born), where a local lamplighter manually lights kerosene lamps on Sovetskaya Street every single evening.
 
 Thankfully, we eventually found some real ones! But this little site turned out so nicely that I wanted to share it with the world.
 
