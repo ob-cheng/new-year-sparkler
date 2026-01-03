@@ -64,6 +64,7 @@ canvas {
 }
 
 .dock-button {
+    text-decoration: none; /* For anchor tags */
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.8);

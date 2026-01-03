@@ -6,6 +6,8 @@
   
   [![Live Demo](https://img.shields.io/badge/Live_Demo-Try_Now-success?style=for-the-badge)](https://ob-cheng.github.io/new-year-sparkler/)
   
+  [🇷🇺 Читать на русском](README.ru.md)
+  
 </div>
 
 ## The Story
