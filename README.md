@@ -8,8 +8,6 @@
   
 </div>
 
----
-
 ## The Story
 
 I built this project for my little brother who absolutely loves New Year sparklers. We initially thought they were completely sold out in stores, so I wanted to make sure he could still have his sparkler fun digitally.
@@ -20,8 +18,6 @@ Thankfully, we eventually found some real ones! But this little site turned out 
   <img src="public/team.png" width="70%" alt="Me and my brother enjoying sparklers">
   <p><em>The Dream Team</em></p>
 </div>
-
----
 
 ## Features
 
@@ -45,8 +41,6 @@ Thankfully, we eventually found some real ones! But this little site turned out 
 
 ### Multilingual Support
 - English, Russian (Зажигай!), Polish (Zapal!)
-
----
 
 ## Running Locally
 
@@ -72,8 +66,6 @@ Visit `http://localhost:5173/new-year-sparkler/`
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run deploy` | Deploy to GitHub Pages |
-
----
 
 <div align="center">
   
