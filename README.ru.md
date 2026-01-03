@@ -4,9 +4,11 @@
   
   *Волшебный, интерактивный виртуальный бенгальский огонь*
   
-  [![Live Demo](https://img.shields.io/badge/Live_Demo-Попробовать-success?style=for-the-badge)](https://ob-cheng.github.io/new-year-sparkler/)
+  [![Live Demo](https://img.shields.io/badge/Live_Demo-Попробовать-success?style=for-the-badge&logo=safari&logoColor=white)](https://ob-cheng.github.io/new-year-sparkler/)
   
-  [🇬🇧 Read in English](README.md)
+  [![English](https://img.shields.io/badge/English-black?style=flat&logo=google-translate&logoColor=white)](README.md)
+  [![Русский](https://img.shields.io/badge/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-black?style=flat&logo=google-translate&logoColor=white)](README.ru.md)
+  [![Polski](https://img.shields.io/badge/Polski-black?style=flat&logo=google-translate&logoColor=white)](README.pl.md)
   
 </div>
 
