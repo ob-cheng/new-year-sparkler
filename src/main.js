@@ -35,6 +35,7 @@ const sparkler = new Sparkler(0, 0, isMobile);
 const snow = new SnowSystem(window.innerWidth, window.innerHeight);
 const bgSystem = new BackgroundSystem(window.innerWidth, window.innerHeight, isMobile);
 const handTracker = new HandTracker();
+
 let arMode = false;
 let handPresent = false; 
 let lastGesture = ''; 

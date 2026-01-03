@@ -25,10 +25,8 @@ export class Sparkler {
     this.vy = 0; // Vertical velocity for dropping
     this.vr = 0; // Rotational velocity for dropping
     
-    // Hand Image
-    this.handImg = new Image();
-    this.handImg.src = '/hand.png'; // Hand asset
-    this.useGhostHand = true; // Flag to toggle it
+    this.sparks = [];
+    this.pool = [];
     
     // Performance Tuning
     // Mobile: 600 sparks (plenty for retina). Desktop: 1000.
@@ -229,17 +227,6 @@ export class Sparkler {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-
-    // [Draw Hand logic remains same, hidden for brevity here if unchanged]
-    if (this.useGhostHand && this.handImg.complete && this.handImg.naturalWidth > 0 && this.state !== 'DROPPING') {
-         ctx.save();
-         ctx.globalAlpha = 0.5;
-         const scale = 0.3;
-         const w = this.handImg.width * scale;
-         const h = this.handImg.height * scale;
-         ctx.drawImage(this.handImg, -w/2, -h/2 - 25, w, h);
-         ctx.restore();
-    }
     
     // Draw Sparkler Stick
     
