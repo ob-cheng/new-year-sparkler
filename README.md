@@ -30,7 +30,7 @@ Thankfully, we eventually found some real ones! But this little site turned out 
 
 ### Atmospheric Background
 - Procedural "Lamplighter" character that walks around lighting vintage street lamps
-- Click lamps to extinguish them - the lamplighter will re-light them
+- **Troll the Lamplighter:** Click any lamp to turn it off. He's a very patient professional and will calmly walk back to re-light it every single time. How long can you keep him busy?
 - Twinkling stars and gradient sky
 
 ### Snow Mode
